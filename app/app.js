@@ -33,6 +33,36 @@ function markAcked(row, reply) {
   row.classList.add('is-acked');
 }
 
+const confirmBox = document.querySelector('[data-testid="confirm"]');
+const confirmId = confirmBox.querySelector('.confirm-id');
+const confirmWhat = confirmBox.querySelector('.confirm-what');
+const confirmYes = confirmBox.querySelector('[data-testid="confirm-ack"]');
+const confirmNo = confirmBox.querySelector('[data-testid="confirm-cancel"]');
+let settleConfirm = null;
+
+function closeConfirm(answer) {
+  if (!settleConfirm) return;
+  const settle = settleConfirm;
+  settleConfirm = null;
+  confirmBox.hidden = true;
+  settle(answer);
+}
+
+function confirmAck(i) {
+  closeConfirm(false);
+  confirmId.textContent = i.id;
+  confirmWhat.textContent = `${i.severity} · ${i.service} · ${i.region} · ${i.summary}`;
+  confirmYes.textContent = `Ack ${i.id}`;
+  confirmBox.hidden = false;
+  confirmNo.focus();
+  return new Promise((resolve) => (settleConfirm = resolve));
+}
+
+confirmYes.addEventListener('click', () => closeConfirm(true));
+confirmNo.addEventListener('click', () => closeConfirm(false));
+confirmBox.addEventListener('click', (e) => { if (e.target === confirmBox) closeConfirm(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeConfirm(false); });
+
 function buildRow(i) {
   const row = el('li', { 'data-testid': 'incident-row', 'data-id': i.id, class: `row ${i.severity}` });
   row.append(
@@ -44,6 +74,8 @@ function buildRow(i) {
   const cell = el('span', { class: 'act' });
   const button = el('button', { type: 'button', 'data-testid': 'ack' }, 'Ack');
   button.addEventListener('click', async () => {
+    // The list can move under the pointer (new incidents land on top), so the ack waits for a confirm that names the incident.
+    if (!(await confirmAck(i))) return;
     button.disabled = true;
     button.textContent = 'Acking…';
     try {

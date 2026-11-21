@@ -108,6 +108,46 @@ if (scenario === 'step1') {
   await page.waitForTimeout(4000);
 }
 
+if (scenario === 'step2') {
+  // ack-incident with the confirm: aim, the list moves, the click lands on the row above; the confirm names it, so on-call cancels and picks again.
+  const list = await ids();
+  const aimed = list[2];
+  const btn = page.locator(`[data-testid="incident-row"][data-id="${aimed}"] [data-testid="ack"]`);
+  const b2 = await btn.boundingBox();
+  const x = b2.x + b2.width / 2, y = b2.y + b2.height / 2;
+  await page.mouse.move(x, y, { steps: 15 });
+  await note('ack-incident', `on-call aims at Ack on ${aimed} and reads the row`);
+  const arrived = await waitForNewTop();
+  const under = await page.evaluate(([px, py]) => document.elementFromPoint(px, py)?.closest('[data-testid="incident-row"]')?.dataset.id, [x, y]);
+  await note('ack-incident', `${arrived} arrived; the list moved down one row; the pointer is now over ${under}`);
+  await page.waitForTimeout(250);
+  await page.mouse.down(); await page.mouse.up();
+  const confirm = page.locator('[data-testid="confirm"]');
+  await confirm.waitFor();
+  const named1 = (await confirm.innerText()).match(/INC-\d+/)?.[0];
+  await note('ack-incident', `the click opened the confirm: it names ${named1}, not ${aimed}; nothing is acked yet (acks sent: ${acks.length})`, { aimed, confirmNamed: named1 });
+  await page.waitForTimeout(2500);
+  const cancel = await page.locator('[data-testid="confirm-cancel"]').boundingBox();
+  await page.mouse.move(cancel.x + cancel.width / 2, cancel.y + cancel.height / 2, { steps: 12 });
+  await page.mouse.down(); await page.mouse.up();
+  await note('ack-incident', `Cancel: confirm closed, no ack sent (acks sent: ${acks.length}); ${named1} is still open`);
+  await page.waitForTimeout(1500);
+  const again = await btn.boundingBox();
+  await page.mouse.move(again.x + again.width / 2, again.y + again.height / 2, { steps: 12 });
+  await page.mouse.down(); await page.mouse.up();
+  await confirm.waitFor();
+  const named2 = (await confirm.innerText()).match(/INC-\d+/)?.[0];
+  await note('ack-incident', `Ack on ${aimed} again: the confirm names ${named2}`);
+  await page.waitForTimeout(2000);
+  const yes = await page.locator('[data-testid="confirm-ack"]').boundingBox();
+  await page.mouse.move(yes.x + yes.width / 2, yes.y + yes.height / 2, { steps: 12 });
+  await page.mouse.down(); await page.mouse.up();
+  const a = await lastAck(1);
+  await page.locator(`[data-testid="incident-row"][data-id="${aimed}"] [data-testid="acked"]`).waitFor();
+  await note('ack-incident', `confirmed: ack sent for ${a.id} (expected ${aimed}); row marked acked`, { expected: aimed, got: a.id, receipt: a.receipt, ackedAt: a.ackedAt, arrived, firstConfirmNamed: named1 });
+  await page.waitForTimeout(4000);
+}
+
 await note('end', 'end of recording');
 await page.waitForTimeout(1500);
 const video = page.video();
