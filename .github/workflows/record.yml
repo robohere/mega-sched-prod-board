@@ -1,0 +1,37 @@
+# Records the deployed board in use and publishes the video as a release asset.
+name: record
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Deployed board (https)
+        required: true
+      tag:
+        description: Release tag for the recording
+        required: true
+      scenario:
+        description: step1 or step2
+        default: step1
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund playwright@1.64.1 && npx playwright install --with-deps chromium
+      - run: node rec/record.mjs "${{ inputs.url }}" "${{ inputs.scenario }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recording
+          path: out/
+      - name: Publish recording
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ inputs.tag }}" out/recording.webm out/events.json \
+            --title "Recording ${{ inputs.tag }}" --notes "Board recording, scenario ${{ inputs.scenario }}, url ${{ inputs.url }}"

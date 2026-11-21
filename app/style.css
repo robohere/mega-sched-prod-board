@@ -1,0 +1,23 @@
+body { margin: 0; font: 15px/1.4 system-ui, sans-serif; color: #1d1d1f; background: #fafafa; }
+header, main, footer { padding: 12px 24px; }
+h1 { margin: 0; font-size: 22px; }
+.sub { margin: 2px 0 0; color: #666; }
+.list { list-style: none; margin: 0; padding: 0; max-width: 960px; }
+.row { display: grid; grid-template-columns: 90px 50px 1fr 200px auto; gap: 12px; align-items: center; min-height: 44px; padding: 0 12px; border-bottom: 1px solid #e5e5e5; background: #fff; }
+.row .id { font-family: ui-monospace, monospace; }
+.row.sev1 .sev { color: #b00020; font-weight: 600; }
+.row.sev2 .sev { color: #a15c00; }
+.row time { color: #555; font-variant-numeric: tabular-nums; }
+footer { color: #777; font-size: 13px; }
+
+.row { grid-template-columns: 90px 50px 1fr 110px 120px; }
+.row.is-acked { background: #f3f8f3; }
+.act button { font: inherit; padding: 4px 14px; border: 1px solid #367c2b; border-radius: 4px; background: #fff; color: #367c2b; cursor: pointer; }
+.act button:hover:not(:disabled) { background: #367c2b; color: #fff; }
+.act button:disabled { opacity: .6; cursor: progress; }
+.acked { color: #367c2b; font-weight: 600; }
+.loader, .empty, .status { max-width: 960px; padding: 12px; color: #555; }
+.status { background: #fff4e5; color: #8a4b00; }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid #ccc; border-top-color: #367c2b; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+[hidden] { display: none !important; }
